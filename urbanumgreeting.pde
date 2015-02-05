@@ -10,7 +10,7 @@ void setup() {
   String[] filenames = findImgFiles(listFileNames(images_dir_path));
   println(filenames);
   
-  size(1024, 768);
+  size(1024, 768, P3D);
   // Create the font
   textFont(createFont("Georgia", 36));
   // The image file must be in the data folder of the current sketch 
@@ -42,11 +42,12 @@ void draw() {
 
   for (Image im : images)
   {
+    translate(0,0, 100+80*sin(millis()/500));
     image(im.img, im.location.x, im.location.y, width-im.location.x, im.img.width/im.img.height * (width-im.location.x));
 
     im.location.x += im.direction.x;
     im.location.y += im.direction.y;
-
+    rotateZ(sin(millis()/500));
     if (im.location.x < 0 - margin)
       im.location.x = width + margin;
     if (im.location.x > width + margin)
