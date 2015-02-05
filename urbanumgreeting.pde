@@ -40,14 +40,14 @@ void draw() {
   // Displays the image at point (0, height/2) at half of its size
   //image(img, 0, height/2, img.width/2, img.height/2);
 
+  translate(0,0, 100+80*sin(millis()/100.0));
+    rotateZ(sin(millis()/500.0));
   for (Image im : images)
   {
-    translate(0,0, 100+80*sin(millis()/500));
     image(im.img, im.location.x, im.location.y, width-im.location.x, im.img.width/im.img.height * (width-im.location.x));
 
     im.location.x += im.direction.x;
     im.location.y += im.direction.y;
-    rotateZ(sin(millis()/500));
     if (im.location.x < 0 - margin)
       im.location.x = width + margin;
     if (im.location.x > width + margin)
