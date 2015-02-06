@@ -1,8 +1,16 @@
+import AULib.*; // A useful easing library, see http://www.imaginary-institute.com/resources/TechNote04/TechNote04.html
+
 PImage img;
 ArrayList<Text> texts = new ArrayList<Text>();
 ArrayList<Image> images = new ArrayList<Image>();
+// Percentages travelled
+FloatList pcts = new FloatList();
+// Where along the curve the first image will be placed. The rest will be added at equal distances behind this
+float start_pc = 0.35;
+float speed = 0.003;
 int margin = 0;
 String path, images_dir_path;
+float x, y, z;
 
 void setup() {
   path = sketchPath;
@@ -11,16 +19,21 @@ void setup() {
   println(filenames);
   
   size(1024, 768, P3D);
+  float fov = PI/6.0;
+  float cameraZ = (height/2.0) / tan(fov/2.0);
+  perspective(fov, float(width)/float(height), 
+            cameraZ/10.0, cameraZ*10.0);
   // Create the font
   textFont(createFont("Georgia", 36));
   // The image file must be in the data folder of the current sketch 
   // to load successfully
   texts.add(new Text("När Bohuslän tillhörde Norge och Halland tillhörde Danmark var Göta älv Sveriges väg väster ut i Europa för varor och krigsskepp. Vid älven behövs en stad. Först byggs Gamla Lödöse vid Lilla Edet. Sedan kom Nya Lödöse, där stadsdelen Gamlestan ligger i dag.", new PVector(width/2, height/2), 14));
   texts.add(new Text("Fire", new PVector(50, 50), 14));
-
   for (int i = 0; i < filenames.length; i++) {
+    float pct = (filenames.length-i)*start_pc/(filenames.length-1);
     //loadImage("/img/"+filenames[i]);
-    images.add(new Image("img/"+filenames[i], new PVector(random(1024), random(200))));
+    images.add(new Image("img/"+filenames[i], new PVector(0, -100), pct, 300));
+    // pcts.append(0.0+i*start_pc/(filenames.length-1));
   }
 
   strokeWeight(100);
@@ -31,33 +44,43 @@ void setup() {
 
 int count = 0;
 
+void MoveImages(float step) {
+  for (Image im : images)
+  {
+    im.ApplyStep(step);
+    // translate(x, y, z);
+    // image(im.img, im.location.x-im.size.x/2, im.location.y-im.size.y/2, im.size.x, im.size.y);
+  }
+}
+
+void mouseWheel(MouseEvent event) {
+  float e = event.getCount();
+  if ((e > 0) && images.get(images.size()-1).pct-speed > 0 )
+  {
+    MoveImages(-speed);
+  }
+  else if ((e < 0) && images.get(0).pct+speed < 1 )
+  {
+    MoveImages(speed);
+  }
+}
+
 void draw() {
-  background(255);
-
-
+  float colorValue = 100+images.get(images.size()-1).pct * 150;
+  background(colorValue,colorValue,colorValue);
+  
+  for (Image im : images)
+  {
+    translate(im.x, im.y, im.z);
+    image(im.img, im.location.x-im.size.x/2, im.location.y-im.size.y/2, im.size.x, im.size.y);
+    translate(-im.x, -im.y, -im.z);
+  }
   // Displays the image at its actual size at point (0,0)
   //image(img, 0, 0);
   // Displays the image at point (0, height/2) at half of its size
   //image(img, 0, height/2, img.width/2, img.height/2);
 
-  translate(0,0, 100+80*sin(millis()/100.0));
-    rotateZ(sin(millis()/500.0));
-  for (Image im : images)
-  {
-    image(im.img, im.location.x, im.location.y, width-im.location.x, im.img.width/im.img.height * (width-im.location.x));
-
-    im.location.x += im.direction.x;
-    im.location.y += im.direction.y;
-    if (im.location.x < 0 - margin)
-      im.location.x = width + margin;
-    if (im.location.x > width + margin)
-      im.location.x = 0 - margin;
-    if (im.location.y < 0 - margin)
-      im.location.y = height + margin;
-    if (im.location.y > height + margin)
-      im.location.y = 0 - margin;
-  }
-
+  translate(0,0,0);
   for (Text t : texts)
   {
     textSize(t.size);
@@ -77,8 +100,8 @@ void draw() {
       t.location.y = 0 - margin;
   }
   
-  text(count, 10, 10);
-  text(frameRate, 10, 30);
+  // text(count, 10, 10);
+  // text(frameRate, 10, 30);
   count++;
   count = count % 360;
 }
@@ -89,15 +112,27 @@ class Image
   PVector size;
   PVector direction;
   PImage img;
+  float pct, x, y, z;
 
-  Image(String filename, PVector startLocation)
+  Image(String filename, PVector startLocation, float startPct, float startWidth)
   {
     println("Loading image: "+filename);
     img = loadImage(filename);
     location = startLocation;
-    float angle = random(TWO_PI);
-    angle = 0;
-    direction = new PVector(cos(angle), sin(angle));
+    pct = startPct;
+    size = new PVector(startWidth, startWidth*img.height/img.width);
+    ApplyStep(0.0);
+    // float angle = random(TWO_PI);
+    // angle = 0;
+    // direction = new PVector(cos(angle), sin(angle));
+  }
+
+  void ApplyStep(float step)
+  {
+    pct += step;
+    x = width/2;
+    y = height/2 + pow(pct, 4) * 8000;
+    z = 800*pct;
   }
 }
 
